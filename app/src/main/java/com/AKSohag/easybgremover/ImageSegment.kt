@@ -23,7 +23,8 @@ object ImageSegment {
         .build()
 
     val options = SubjectSegmenterOptions.Builder()
-        .enableMultipleSubjects(subjectResultOptions)
+        .enableForegroundBitmap()
+        .enableForegroundConfidenceMask()
         .build()
 
     val segmenter = SubjectSegmentation.getClient(options)

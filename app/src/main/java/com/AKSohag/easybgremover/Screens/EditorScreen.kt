@@ -4,17 +4,23 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.Compare
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -38,13 +44,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.AKSohag.easybgremover.ImageSegmentationHelper
+import com.AKSohag.easybgremover.ImageSegment
 import com.AKSohag.easybgremover.ui.Utils.checkeredBackground
 import com.AKSohag.easybgremover.ui.Utils.getBitmapFromUri
 
@@ -82,9 +91,12 @@ fun EditorScreen(
         if (inputBitmap != null && outputBitmap == null) {
             Log.d("TAG", "EditorScreen: Starting image processing")
             loading = true
-
+            try {
+                outputBitmap = ImageSegment.processImage(inputBitmap!!)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
             // Consider using a coroutine for heavy processing
-            outputBitmap = ImageSegmentationHelper.getResult(inputBitmap!!, context)
             loading = false
             Log.d("TAG", "EditorScreen: Image processing completed")
         }
@@ -116,7 +128,7 @@ fun EditorScreen(
                 colors = CardDefaults.cardColors(containerColor = Color.Transparent),
                 border = CardDefaults.outlinedCardBorder()
             ) {
-                Box() {
+                Box {
                     if (imageUriString.value.isNotBlank()) {
                         if (outputBitmap != null) {
                             Image(
@@ -147,6 +159,8 @@ fun EditorScreen(
 
 @Composable
 private fun EditorBottomAppBar() {
+    var showColorPicker by remember { mutableStateOf(false) }
+    var customColor by remember { mutableStateOf(Color.Red) }
 
     val colors = remember {
         mutableStateListOf(
@@ -165,30 +179,91 @@ private fun EditorBottomAppBar() {
         )
     }
 
+    // Color picker dialog
+    if (showColorPicker) {
+        AlertDialog(
+            onDismissRequest = { showColorPicker = false },
+            title = { Text("Select Color") },
+            text = {
+                // Replace this with your preferred color picker implementation
+                // For example, you might use a library like ComposeColorPicker
+                // This is a simplified placeholder
+                Column {
+                    // Simple RGB sliders could go here
+                    Text("Color Picker Dialog Content")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = {
+                        // Add the custom color to the list if it's not already there
+                        if (!colors.contains(customColor)) {
+                            colors.add(1, customColor) // Add after transparent
+                        }
+                        showColorPicker = false
+                    }) {
+                        Text("Add Color")
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showColorPicker = false }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
+
     BottomAppBar {
         LazyRow(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                    border = CardDefaults.outlinedCardBorder(),
+                    modifier = Modifier
+                        .size(70.dp)
+                        .padding(8.dp)
+                        .clip(MaterialTheme.shapes.medium),
+                    onClick = {
+                        showColorPicker = true
+                        Log.d("TAG", "EditorBottomAppBar: Custom color picker clicked")
+                    }
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.sweepGradient(
+                                    colors = listOf(
+                                        Color.Red, Color.Yellow, Color.Green,
+                                        Color.Cyan, Color.Blue, Color.Magenta
+                                    )
+                                )
+                            ),
+                    )
+                }
+            }
+
+            // Predefined color items
             items(colors.size) {
                 val color = colors[it]
                 Card(
                     colors = CardDefaults.cardColors(containerColor = color),
                     border = CardDefaults.outlinedCardBorder(),
-                    modifier =
-                    Modifier
+                    modifier = Modifier
                         .size(70.dp)
                         .padding(8.dp)
                         .clip(MaterialTheme.shapes.medium)
                         .drawBehind {
                             checkeredBackground()
                         },
-                    onClick = {}
+                    onClick = {
+                        Log.d("TAG", "EditorBottomAppBar: Clicked on color $color index $it")
+                    }
                 ) {
 
                 }
             }
-
         }
     }
 }
