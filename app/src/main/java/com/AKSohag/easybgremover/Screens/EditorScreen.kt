@@ -1,6 +1,7 @@
 package com.AKSohag.easybgremover.Screens
 
 import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.Image
@@ -8,17 +9,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeGesturesPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.Compare
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -30,24 +33,27 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -56,6 +62,15 @@ import androidx.compose.ui.unit.dp
 import com.AKSohag.easybgremover.ImageSegment
 import com.AKSohag.easybgremover.ui.Utils.checkeredBackground
 import com.AKSohag.easybgremover.ui.Utils.getBitmapFromUri
+import com.github.skydoves.colorpicker.compose.AlphaSlider
+import com.github.skydoves.colorpicker.compose.AlphaTile
+import com.github.skydoves.colorpicker.compose.BrightnessSlider
+import com.github.skydoves.colorpicker.compose.ColorEnvelope
+import com.github.skydoves.colorpicker.compose.HsvColorPicker
+import com.github.skydoves.colorpicker.compose.rememberColorPickerController
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Created by ak-sohag on 2/25/2025.
@@ -65,15 +80,16 @@ import com.AKSohag.easybgremover.ui.Utils.getBitmapFromUri
 @Preview
 @Composable
 fun EditorScreen(
-    uriString: String? = "",
-    onBackClick: () -> Unit = {}
+    uriString: String? = "", onBackClick: () -> Unit = {}
 ) {
     val imageUriString = remember { mutableStateOf(uriString ?: "") }
     val context = LocalContext.current
     var inputBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var outputBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var displayBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var loading by remember { mutableStateOf(false) }
-
+    var processingBackground by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     // First LaunchedEffect to load the input bitmap from URI
     LaunchedEffect(uriString) {
@@ -82,6 +98,7 @@ fun EditorScreen(
             val uri = Uri.parse(uriString)
             Log.d("TAG", "EditorScreen: Parsed URI $uri")
             inputBitmap = getBitmapFromUri(context, uri)
+            displayBitmap = inputBitmap
             Log.d("TAG", "EditorScreen: Loaded bitmap ${inputBitmap != null}")
         }
     }
@@ -96,26 +113,38 @@ fun EditorScreen(
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-            // Consider using a coroutine for heavy processing
+            if (outputBitmap != null) displayBitmap = outputBitmap else outputBitmap = inputBitmap
             loading = false
             Log.d("TAG", "EditorScreen: Image processing completed")
         }
     }
 
-    Scaffold(
-        bottomBar = {
-            EditorBottomAppBar()
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { /* Handle click */ },
-                shape = MaterialTheme.shapes.large
-            ) {
-                Icon(Icons.Filled.Compare, contentDescription = "Before After")
+    Scaffold(bottomBar = {
+        EditorBottomAppBar(
+            onColorSelected = { color ->
+                Log.d("TAG", "EditorScreen: Selected color $color")
+                // Apply the background color to the bitmap
+                if (outputBitmap != null) {
+                    processingBackground = true
+                    scope.launch {
+                        val newBitmap = withContext(Dispatchers.Default) {
+                            // Apply background color on a background thread
+                            addBackgroundColorToBitmap(outputBitmap!!, color)
+                        }
+                        displayBitmap = newBitmap
+                        processingBackground = false
+                        Log.d("TAG", "EditorScreen: Background color applied to bitmap")
+                    }
+                }
             }
-        },
-        topBar = { EditorTopAppbar(onBackClick = onBackClick) }
-    ) {
+        )
+    }, floatingActionButton = {
+        FloatingActionButton(
+            onClick = { /* Handle click */ }, shape = MaterialTheme.shapes.large
+        ) {
+            Icon(Icons.Filled.Compare, contentDescription = "Before After")
+        }
+    }, topBar = { EditorTopAppbar(onBackClick = onBackClick) }) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -128,25 +157,32 @@ fun EditorScreen(
                 colors = CardDefaults.cardColors(containerColor = Color.Transparent),
                 border = CardDefaults.outlinedCardBorder()
             ) {
-                Box {
+                Box(
+                    contentAlignment = Alignment.Center
+                ) {
                     if (imageUriString.value.isNotBlank()) {
-                        if (outputBitmap != null) {
+                        if (displayBitmap != null) {
                             Image(
-                                bitmap = outputBitmap!!.asImageBitmap(),
+                                bitmap = displayBitmap!!.asImageBitmap(),
                                 contentDescription = "Processed Image",
                                 modifier = Modifier.drawBehind {
                                     checkeredBackground()
                                 }
                             )
-                        } else if (inputBitmap != null) {
-                            Image(
-                                bitmap = inputBitmap!!.asImageBitmap(),
-                                contentDescription = "Original Image"
-                            )
                         }
+//                        else if (inputBitmap != null) {
+//                            Image(
+//                                bitmap = inputBitmap!!.asImageBitmap(),
+//                                contentScale = ContentScale.Fit,
+//                                contentDescription = "Original Image",
+//                                modifier = Modifier.drawBehind {
+//                                    checkeredBackground()
+//                                }
+//                            )
+//                        }
 
-                        // Display a loading indicator while image segmentation is in progress
-                        if (loading) {
+                        // Display a loading indicator while processing
+                        if (loading || processingBackground) {
                             CircularProgressIndicator()
                         }
                     }
@@ -157,9 +193,17 @@ fun EditorScreen(
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun EditorBottomAppBar() {
+private fun EditorBottomAppBar(
+    onColorSelected: (Color) -> Unit = {}  // Callback for color selection
+) {
     var showColorPicker by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+
+
+    val controller = rememberColorPickerController()
     var customColor by remember { mutableStateOf(Color.Red) }
 
     val colors = remember {
@@ -181,34 +225,79 @@ private fun EditorBottomAppBar() {
 
     // Color picker dialog
     if (showColorPicker) {
-        AlertDialog(
+        ModalBottomSheet(
             onDismissRequest = { showColorPicker = false },
-            title = { Text("Select Color") },
-            text = {
-                // Replace this with your preferred color picker implementation
-                // For example, you might use a library like ComposeColorPicker
-                // This is a simplified placeholder
+            sheetState = sheetState
+        ) {
+            Text(
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+                text = "Color Picker",
+            )
+            Box(
+                modifier = Modifier
+                    .safeGesturesPadding(),
+            ) {
                 Column {
-                    // Simple RGB sliders could go here
-                    Text("Color Picker Dialog Content")
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = {
-                        // Add the custom color to the list if it's not already there
-                        if (!colors.contains(customColor)) {
-                            colors.add(1, customColor) // Add after transparent
-                        }
-                        showColorPicker = false
-                    }) {
-                        Text("Add Color")
+
+                    Row(
+                        modifier = Modifier.height(200.dp)
+                    ) {
+                        AlphaTile(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .padding(8.dp)
+                                .clip(MaterialTheme.shapes.medium), controller = controller
+                        )
+                        HsvColorPicker(modifier = Modifier
+                            .weight(1f)
+                            .fillMaxSize(),
+                            controller = controller,
+                            onColorChanged = { colorEnvelope: ColorEnvelope ->
+                                customColor = colorEnvelope.color
+                            })
+
+
                     }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showColorPicker = false }) {
-                    Text("Close")
+
+
+                    AlphaSlider(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                            .height(20.dp),
+                        controller = controller,
+                    )
+
+                    BrightnessSlider(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                            .height(20.dp),
+                        controller = controller,
+                    )
+
+                    Button(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .safeGesturesPadding(),
+                        contentPadding = PaddingValues(16.dp),
+                        onClick = {
+                            // Apply the selected custom color when done
+                            onColorSelected(customColor)
+                            scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                if (!sheetState.isVisible) {
+                                    showColorPicker = false
+                                }
+                            }
+                        }) {
+                        Text("Done".uppercase())
+                    }
+
                 }
             }
-        )
+        }
     }
 
     BottomAppBar {
@@ -217,8 +306,7 @@ private fun EditorBottomAppBar() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             item {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                Card(colors = CardDefaults.cardColors(containerColor = Color.Transparent),
                     border = CardDefaults.outlinedCardBorder(),
                     modifier = Modifier
                         .size(70.dp)
@@ -226,17 +314,19 @@ private fun EditorBottomAppBar() {
                         .clip(MaterialTheme.shapes.medium),
                     onClick = {
                         showColorPicker = true
-                        Log.d("TAG", "EditorBottomAppBar: Custom color picker clicked")
-                    }
-                ) {
+                    }) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(
                                 brush = Brush.sweepGradient(
                                     colors = listOf(
-                                        Color.Red, Color.Yellow, Color.Green,
-                                        Color.Cyan, Color.Blue, Color.Magenta
+                                        Color.Red,
+                                        Color.Yellow,
+                                        Color.Green,
+                                        Color.Cyan,
+                                        Color.Blue,
+                                        Color.Magenta
                                     )
                                 )
                             ),
@@ -247,20 +337,20 @@ private fun EditorBottomAppBar() {
             // Predefined color items
             items(colors.size) {
                 val color = colors[it]
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = color),
+                Card(colors = CardDefaults.cardColors(containerColor = color),
                     border = CardDefaults.outlinedCardBorder(),
                     modifier = Modifier
                         .size(70.dp)
                         .padding(8.dp)
                         .clip(MaterialTheme.shapes.medium)
                         .drawBehind {
-                            checkeredBackground()
+                            if (color == Color.Transparent) {
+                                checkeredBackground()
+                            }
                         },
                     onClick = {
-                        Log.d("TAG", "EditorBottomAppBar: Clicked on color $color index $it")
-                    }
-                ) {
+                        onColorSelected(color)
+                    }) {
 
                 }
             }
@@ -272,33 +362,52 @@ private fun EditorBottomAppBar() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditorTopAppbar(
-    modifier: Modifier = Modifier,
-    onBackClick: () -> Unit
+    modifier: Modifier = Modifier, onBackClick: () -> Unit
 ) {
-    CenterAlignedTopAppBar(
-        modifier = modifier,
-        navigationIcon = {
-            IconButton(onClick = {
-                onBackClick()
-            }) {
-                Icon(
-                    imageVector = Icons.Default.Close, // Example: Heart icon
-                    contentDescription = "Back",
-                )
-            }
-        },
-        actions = {
-            TextButton(onClick = {}) {
-                Text(
-                    "save".uppercase(),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.W900,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-
-        },
-        title = {
+    CenterAlignedTopAppBar(modifier = modifier, navigationIcon = {
+        IconButton(onClick = {
+            onBackClick()
+        }) {
+            Icon(
+                imageVector = Icons.Default.Close, // Example: Heart icon
+                contentDescription = "Back",
+            )
         }
-    )
+    }, actions = {
+        TextButton(onClick = {}) {
+            Text(
+                "save".uppercase(),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.W900,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+
+    }, title = {})
 }
+
+
+fun addBackgroundColorToBitmap(bitmap: Bitmap, backgroundColor: Color): Bitmap {
+    // Ensure the original bitmap is in software mode
+    val softwareBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, false)
+
+    // Create a new mutable bitmap with the same size
+    val newBitmap = Bitmap.createBitmap(softwareBitmap.width, softwareBitmap.height, Bitmap.Config.ARGB_8888)
+
+    val canvas = Canvas(newBitmap)
+
+    // Draw the background color first
+    canvas.drawColor(backgroundColor.toArgb())
+
+    // Draw the original bitmap on top of the background
+    canvas.drawBitmap(softwareBitmap, 0f, 0f, null)
+
+    return newBitmap
+}
+
+
+
+
+
+
+

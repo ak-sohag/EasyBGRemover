@@ -75,6 +75,9 @@ dependencies {
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.1.0")
     implementation ("com.github.SmartToolFactory:Compose-BeforeAfter:1.2.3")
 
+    implementation("com.github.skydoves:colorpicker-compose:1.1.2")
+
+
 
     // fonts
     implementation("androidx.compose.ui:ui-text-google-fonts:1.7.8")
