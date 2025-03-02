@@ -148,22 +148,22 @@ fun TheHomeScreen(modifier: Modifier = Modifier, onImageSelected: (Uri) -> Unit)
                 ) {
                     Text("Select Image")
                 }
-                Button(
-                    onClick = {
-                        pickMultipleMedia.launch(
-                            PickVisualMediaRequest(
-                                ActivityResultContracts.PickVisualMedia.ImageOnly
-                            )
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    contentPadding = PaddingValues(15.dp),
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Text("Select Multiple Images")
-                }
+//                Button(
+//                    onClick = {
+//                        pickMultipleMedia.launch(
+//                            PickVisualMediaRequest(
+//                                ActivityResultContracts.PickVisualMedia.ImageOnly
+//                            )
+//                        )
+//                    },
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .padding(16.dp),
+//                    contentPadding = PaddingValues(15.dp),
+//                    shape = MaterialTheme.shapes.medium
+//                ) {
+//                    Text("Select Multiple Images")
+//                }
 
                 Spacer(modifier = Modifier.height(32.dp))
                 Text("No Images? Try one of these")

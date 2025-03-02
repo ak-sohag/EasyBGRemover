@@ -1,7 +1,7 @@
 package com.AKSohag.easybgremover.Screens
 
+import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.Image
@@ -11,17 +11,19 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeGestures
 import androidx.compose.foundation.layout.safeGesturesPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Compare
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -29,7 +31,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -53,21 +54,26 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.AKSohag.easybgremover.ImageSegment
+import com.AKSohag.easybgremover.ui.Utils.addBackgroundColor
 import com.AKSohag.easybgremover.ui.Utils.checkeredBackground
-import com.AKSohag.easybgremover.ui.Utils.getBitmapFromUri
+import com.AKSohag.easybgremover.ui.Utils.saveAsPng
+import com.AKSohag.easybgremover.ui.Utils.scaleDownTo1080p
+import com.AKSohag.easybgremover.ui.Utils.toBitmap
 import com.github.skydoves.colorpicker.compose.AlphaSlider
 import com.github.skydoves.colorpicker.compose.AlphaTile
 import com.github.skydoves.colorpicker.compose.BrightnessSlider
 import com.github.skydoves.colorpicker.compose.ColorEnvelope
 import com.github.skydoves.colorpicker.compose.HsvColorPicker
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
+import com.smarttoolfactory.beforeafter.BeforeAfterImage
+import com.smarttoolfactory.beforeafter.ContentOrder
+import com.smarttoolfactory.beforeafter.OverlayStyle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -77,6 +83,7 @@ import kotlinx.coroutines.withContext
  */
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 fun EditorScreen(
@@ -91,15 +98,17 @@ fun EditorScreen(
     var processingBackground by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
+    var showSaveBottomSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var savingInProgress by remember { mutableStateOf(false) }
+
+
     // First LaunchedEffect to load the input bitmap from URI
     LaunchedEffect(uriString) {
-        Log.d("TAG", "EditorScreen: Loading image from URI $uriString")
         if (!uriString.isNullOrEmpty()) {
             val uri = Uri.parse(uriString)
-            Log.d("TAG", "EditorScreen: Parsed URI $uri")
-            inputBitmap = getBitmapFromUri(context, uri)
+            inputBitmap = uri.toBitmap(context)
             displayBitmap = inputBitmap
-            Log.d("TAG", "EditorScreen: Loaded bitmap ${inputBitmap != null}")
         }
     }
 
@@ -109,7 +118,9 @@ fun EditorScreen(
             Log.d("TAG", "EditorScreen: Starting image processing")
             loading = true
             try {
-                outputBitmap = ImageSegment.processImage(inputBitmap!!)
+                outputBitmap = withContext(Dispatchers.Default) {
+                    ImageSegment.processImage(inputBitmap!!)
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -119,76 +130,161 @@ fun EditorScreen(
         }
     }
 
-    Scaffold(bottomBar = {
-        EditorBottomAppBar(
-            onColorSelected = { color ->
-                Log.d("TAG", "EditorScreen: Selected color $color")
-                // Apply the background color to the bitmap
-                if (outputBitmap != null) {
-                    processingBackground = true
-                    scope.launch {
-                        val newBitmap = withContext(Dispatchers.Default) {
-                            // Apply background color on a background thread
-                            addBackgroundColorToBitmap(outputBitmap!!, color)
+    if (showSaveBottomSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showSaveBottomSheet = false },
+            sheetState = sheetState
+        ) {
+            var uriOfImage by remember { mutableStateOf<Uri?>(null) }
+            LaunchedEffect(showSaveBottomSheet) {
+                scope.launch {
+                    displayBitmap?.let { bitmap ->
+                        savingInProgress = true
+                        val uri = withContext(Dispatchers.IO) {
+                            bitmap.saveAsPng(context, "my_image_${System.currentTimeMillis()}")
                         }
-                        displayBitmap = newBitmap
-                        processingBackground = false
-                        Log.d("TAG", "EditorScreen: Background color applied to bitmap")
+                        uriOfImage = uri
+                        savingInProgress = false
                     }
                 }
             }
-        )
-    }, floatingActionButton = {
-        FloatingActionButton(
-            onClick = { /* Handle click */ }, shape = MaterialTheme.shapes.large
-        ) {
-            Icon(Icons.Filled.Compare, contentDescription = "Before After")
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.clip(shape = MaterialTheme.shapes.medium)
+                ) {
+                    Image(
+                        bitmap = displayBitmap!!.asImageBitmap(),
+                        contentDescription = "Processed Image",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .padding(16.dp)
+                            .clip(shape = MaterialTheme.shapes.medium)
+                    )
+                    if (savingInProgress) {
+                        CircularProgressIndicator()
+                        Text("Saving...")
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                if (uriOfImage != null) {
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text("Saved Successfully")
+                        TextButton(
+                            onClick = {
+                                // share the image
+                                val shareIntent = Intent(Intent.ACTION_SEND)
+                                shareIntent.type = "image/png"
+                                shareIntent.putExtra(Intent.EXTRA_STREAM, uriOfImage)
+                                context.startActivity(
+                                    Intent.createChooser(
+                                        shareIntent,
+                                        "Share Image"
+                                    )
+                                )
+                            }
+                        ) {
+                            Text("Share Image")
+                        }
+                    }
+
+
+
+                    Button(
+                        onClick = {
+                            scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                if (!sheetState.isVisible) {
+                                    showSaveBottomSheet = false
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Close")
+                    }
+                }
+            }
+
         }
-    }, topBar = { EditorTopAppbar(onBackClick = onBackClick) }) {
+    }
+
+    Scaffold(
+        contentWindowInsets = WindowInsets.safeGestures,
+        bottomBar = {
+            if (loading.not()) {
+                EditorBottomAppBar(onColorSelected = { color ->
+                    Log.d("TAG", "EditorScreen: Selected color $color")
+                    // Apply the background color to the bitmap
+                    if (outputBitmap != null) {
+                        processingBackground = true
+                        scope.launch {
+                            displayBitmap = outputBitmap!!.addBackgroundColor(color)
+                            processingBackground = false
+                            Log.d("TAG", "EditorScreen: Background color applied to bitmap")
+                        }
+                    }
+                })
+            }
+        },
+        topBar = {
+            EditorTopAppbar(onBackClick = onBackClick, onSaveButtonClicked = {
+                showSaveBottomSheet = true
+            })
+        }) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(it)
-                .padding(16.dp),
+                .padding(paddingValues = paddingValues),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                border = CardDefaults.outlinedCardBorder()
             ) {
-                Box(
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(contentAlignment = Alignment.Center) {
                     if (imageUriString.value.isNotBlank()) {
-                        if (displayBitmap != null) {
-                            Image(
-                                bitmap = displayBitmap!!.asImageBitmap(),
-                                contentDescription = "Processed Image",
-                                modifier = Modifier.drawBehind {
-                                    checkeredBackground()
-                                }
-                            )
-                        }
-//                        else if (inputBitmap != null) {
-//                            Image(
-//                                bitmap = inputBitmap!!.asImageBitmap(),
-//                                contentScale = ContentScale.Fit,
-//                                contentDescription = "Original Image",
-//                                modifier = Modifier.drawBehind {
-//                                    checkeredBackground()
-//                                }
-//                            )
-//                        }
+                        if (displayBitmap != null && loading.not()) {
+                            BeforeAfterImage(
+                                overlayStyle = OverlayStyle(
+                                    verticalThumbMove = true,
 
-                        // Display a loading indicator while processing
+                                    ),
+                                contentOrder = ContentOrder.AfterBefore,
+                                enableProgressWithTouch = true,
+                                beforeImage = inputBitmap!!.asImageBitmap(),
+                                afterImage = displayBitmap!!.asImageBitmap(),
+                                modifier = Modifier
+                                    .drawBehind {
+                                        checkeredBackground()
+                                    },
+                            )
+                        } else if (displayBitmap != null) {
+                            Image(bitmap = displayBitmap!!.asImageBitmap(),
+                                contentDescription = "Processed Image",
+                                modifier = Modifier
+                                    .drawBehind {
+                                        checkeredBackground()
+                                    })
+                        }
                         if (loading || processingBackground) {
                             CircularProgressIndicator()
                         }
                     }
                 }
             }
+
         }
+
     }
 }
 
@@ -226,8 +322,7 @@ private fun EditorBottomAppBar(
     // Color picker dialog
     if (showColorPicker) {
         ModalBottomSheet(
-            onDismissRequest = { showColorPicker = false },
-            sheetState = sheetState
+            onDismissRequest = { showColorPicker = false }, sheetState = sheetState
         ) {
             Text(
                 textAlign = TextAlign.Center,
@@ -235,8 +330,7 @@ private fun EditorBottomAppBar(
                 text = "Color Picker",
             )
             Box(
-                modifier = Modifier
-                    .safeGesturesPadding(),
+                modifier = Modifier.safeGesturesPadding(),
             ) {
                 Column {
 
@@ -278,10 +372,9 @@ private fun EditorBottomAppBar(
                         controller = controller,
                     )
 
-                    Button(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .safeGesturesPadding(),
+                    Button(modifier = Modifier
+                        .fillMaxWidth()
+                        .safeGesturesPadding(),
                         contentPadding = PaddingValues(16.dp),
                         onClick = {
                             // Apply the selected custom color when done
@@ -362,8 +455,10 @@ private fun EditorBottomAppBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditorTopAppbar(
-    modifier: Modifier = Modifier, onBackClick: () -> Unit
+    modifier: Modifier = Modifier, onBackClick: () -> Unit, onSaveButtonClicked: () -> Unit = {}
 ) {
+
+
     CenterAlignedTopAppBar(modifier = modifier, navigationIcon = {
         IconButton(onClick = {
             onBackClick()
@@ -374,7 +469,9 @@ fun EditorTopAppbar(
             )
         }
     }, actions = {
-        TextButton(onClick = {}) {
+        TextButton(onClick = {
+            onSaveButtonClicked()
+        }) {
             Text(
                 "save".uppercase(),
                 style = MaterialTheme.typography.titleMedium,
@@ -384,26 +481,11 @@ fun EditorTopAppbar(
         }
 
     }, title = {})
+
+
 }
 
 
-fun addBackgroundColorToBitmap(bitmap: Bitmap, backgroundColor: Color): Bitmap {
-    // Ensure the original bitmap is in software mode
-    val softwareBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, false)
-
-    // Create a new mutable bitmap with the same size
-    val newBitmap = Bitmap.createBitmap(softwareBitmap.width, softwareBitmap.height, Bitmap.Config.ARGB_8888)
-
-    val canvas = Canvas(newBitmap)
-
-    // Draw the background color first
-    canvas.drawColor(backgroundColor.toArgb())
-
-    // Draw the original bitmap on top of the background
-    canvas.drawBitmap(softwareBitmap, 0f, 0f, null)
-
-    return newBitmap
-}
 
 
 
