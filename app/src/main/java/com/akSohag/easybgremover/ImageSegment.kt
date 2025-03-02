@@ -1,10 +1,8 @@
-package com.AKSohag.easybgremover
+package com.akSohag.easybgremover
 
 import android.graphics.Bitmap
-import android.graphics.Color
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.segmentation.subject.SubjectSegmentation
-import com.google.mlkit.vision.segmentation.subject.SubjectSegmentationResult
 import com.google.mlkit.vision.segmentation.subject.SubjectSegmenterOptions
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException

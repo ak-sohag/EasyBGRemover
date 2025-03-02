@@ -1,4 +1,4 @@
-package com.AKSohag.easybgremover
+package com.akSohag.easybgremover
 
 import android.net.Uri
 import android.os.Bundle
@@ -10,8 +10,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.AKSohag.easybgremover.Screens.EditorScreen
-import com.AKSohag.easybgremover.Screens.HomeScreen
+import com.akSohag.easybgremover.screens.EditorScreen
+import com.akSohag.easybgremover.screens.HomeScreen
 
 class MainActivity : ComponentActivity() {
 

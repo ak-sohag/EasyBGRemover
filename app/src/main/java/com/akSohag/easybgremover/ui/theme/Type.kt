@@ -1,10 +1,10 @@
-package com.AKSohag.ui.theme
+package com.akSohag.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.googlefonts.Font
 import androidx.compose.ui.text.googlefonts.GoogleFont
-import com.AKSohag.easybgremover.R
+import com.akSohag.easybgremover.R
 
 val provider = GoogleFont.Provider(
     providerAuthority = "com.google.android.gms.fonts",

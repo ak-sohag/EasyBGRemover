@@ -1,4 +1,4 @@
-package com.AKSohag.easybgremover.ui
+package com.akSohag.easybgremover.ui
 
 import android.Manifest
 import android.app.Activity

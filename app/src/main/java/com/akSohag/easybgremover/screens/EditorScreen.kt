@@ -1,4 +1,4 @@
-package com.AKSohag.easybgremover.Screens
+package com.akSohag.easybgremover.screens
 
 import android.content.Intent
 import android.graphics.Bitmap
@@ -59,12 +59,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.AKSohag.easybgremover.ImageSegment
-import com.AKSohag.easybgremover.ui.Utils.addBackgroundColor
-import com.AKSohag.easybgremover.ui.Utils.checkeredBackground
-import com.AKSohag.easybgremover.ui.Utils.saveAsPng
-import com.AKSohag.easybgremover.ui.Utils.scaleDownTo1080p
-import com.AKSohag.easybgremover.ui.Utils.toBitmap
+import com.akSohag.easybgremover.ImageSegment
+import com.akSohag.easybgremover.ui.Utils.addBackgroundColor
+import com.akSohag.easybgremover.ui.Utils.checkeredBackground
+import com.akSohag.easybgremover.ui.Utils.saveAsPng
+import com.akSohag.easybgremover.ui.Utils.toBitmap
 import com.github.skydoves.colorpicker.compose.AlphaSlider
 import com.github.skydoves.colorpicker.compose.AlphaTile
 import com.github.skydoves.colorpicker.compose.BrightnessSlider
@@ -249,8 +248,7 @@ fun EditorScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Card(
-            ) {
+            Card{
                 Box(contentAlignment = Alignment.Center) {
                     if (imageUriString.value.isNotBlank()) {
                         if (displayBitmap != null && loading.not()) {

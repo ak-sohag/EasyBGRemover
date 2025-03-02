@@ -1,4 +1,4 @@
-package com.AKSohag.easybgremover.Screens
+package com.akSohag.easybgremover.screens
 
 import android.content.Context
 import android.net.Uri
@@ -9,6 +9,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,12 +45,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.AKSohag.easybgremover.MLKitModuleInstaller
-import com.AKSohag.easybgremover.R
-import com.AKSohag.easybgremover.ui.Utils.checkeredBackground
+import com.akSohag.easybgremover.MLKitModuleInstaller
+import com.akSohag.easybgremover.R
+import com.akSohag.easybgremover.ui.Utils.checkeredBackground
 import com.smarttoolfactory.beforeafter.BeforeAfterImage
 import com.smarttoolfactory.beforeafter.OverlayStyle
-import dashedBorder
 import kotlinx.coroutines.delay
 
 /**
@@ -59,7 +59,6 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen(
-    modifier: Modifier = Modifier,
     onImageSelected: (Uri) -> Unit,
 ) {
 
@@ -99,8 +98,7 @@ fun TheHomeScreen(modifier: Modifier = Modifier, onImageSelected: (Uri) -> Unit)
             Log.d("TAG", "HomeScreen: $uris ")
         }
 
-    Scaffold(
-    ) {
+    Scaffold {
         Box(
             modifier
                 .padding(it)
@@ -124,10 +122,9 @@ fun TheHomeScreen(modifier: Modifier = Modifier, onImageSelected: (Uri) -> Unit)
                 BeforeAfter(
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
-                        .dashedBorder(
-                            width = 2.dp,
-                            color = Color.LightGray,
-                            shape = MaterialTheme.shapes.medium, on = 4.dp, off = 4.dp
+                        .border(
+                            width = 1.dp, color = Color.Gray,
+                            shape = MaterialTheme.shapes.medium
                         )
 
                 )

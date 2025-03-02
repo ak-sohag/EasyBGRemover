@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.AKSohag.easybgremover"
+    namespace = "com.akSohag.easybgremover"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.AKSohag.easybgremover"
+        applicationId = "com.akSohag.easybgremover"
         minSdk = 24
         targetSdk = 35
         versionCode = 1

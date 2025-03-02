@@ -1,4 +1,4 @@
-package com.AKSohag.compose
+package com.akSohag.compose
 import androidx.compose.ui.graphics.Color
 
 val primaryLight = Color(0xFF8C4A60)

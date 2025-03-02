@@ -1,4 +1,4 @@
-package com.AKSohag.easybgremover
+package com.akSohag.easybgremover
 
 import org.junit.Test
 
