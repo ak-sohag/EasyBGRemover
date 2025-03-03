@@ -8,18 +8,18 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.safeContent
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -37,17 +37,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.imageResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.akSohag.easybgremover.MLKitModuleInstaller
 import com.akSohag.easybgremover.R
-import com.akSohag.easybgremover.ui.Utils.checkeredBackground
+import com.akSohag.easybgremover.helpers.MLKitModuleInstaller
+import com.akSohag.easybgremover.utils.Utils.checkeredBackground
 import com.smarttoolfactory.beforeafter.BeforeAfterImage
 import com.smarttoolfactory.beforeafter.OverlayStyle
 import kotlinx.coroutines.delay
@@ -98,7 +96,9 @@ fun TheHomeScreen(modifier: Modifier = Modifier, onImageSelected: (Uri) -> Unit)
             Log.d("TAG", "HomeScreen: $uris ")
         }
 
-    Scaffold {
+    Scaffold(
+        contentWindowInsets = WindowInsets.safeContent
+    ) {
         Box(
             modifier
                 .padding(it)
@@ -121,7 +121,6 @@ fun TheHomeScreen(modifier: Modifier = Modifier, onImageSelected: (Uri) -> Unit)
                 Spacer(modifier = Modifier.height(32.dp))
                 BeforeAfter(
                     modifier = Modifier
-                        .padding(horizontal = 16.dp)
                         .border(
                             width = 1.dp, color = Color.Gray,
                             shape = MaterialTheme.shapes.medium
@@ -138,12 +137,11 @@ fun TheHomeScreen(modifier: Modifier = Modifier, onImageSelected: (Uri) -> Unit)
                         )
                     },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
+                        .fillMaxWidth(),
                     contentPadding = PaddingValues(15.dp),
                     shape = MaterialTheme.shapes.medium
                 ) {
-                    Text("Select Image")
+                    Text("Quick Remove")
                 }
 //                Button(
 //                    onClick = {
@@ -163,17 +161,17 @@ fun TheHomeScreen(modifier: Modifier = Modifier, onImageSelected: (Uri) -> Unit)
 //                }
 
                 Spacer(modifier = Modifier.height(32.dp))
-                Text("No Images? Try one of these")
-                Spacer(modifier = Modifier.height(16.dp))
-                Image(
-                    painter = painterResource(R.drawable.dummy_replace),
-                    contentDescription = "Dummy Image",
-                    contentScale = ContentScale.FillHeight,
-                    modifier = modifier
-                        .fillMaxWidth()
-                        .size(70.dp)
-                        .padding(horizontal = 16.dp)
-                )
+//                Text("No Images? Try one of these")
+//                Spacer(modifier = Modifier.height(16.dp))
+//                Image(
+//                    painter = painterResource(R.drawable.dummy_replace),
+//                    contentDescription = "Dummy Image",
+//                    contentScale = ContentScale.FillHeight,
+//                    modifier = modifier
+//                        .fillMaxWidth()
+//                        .size(70.dp)
+//                        .padding(horizontal = 16.dp)
+//                )
 
             }
 

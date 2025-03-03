@@ -1,4 +1,4 @@
-package com.akSohag.easybgremover
+package com.akSohag.easybgremover.helpers
 
 import android.graphics.Bitmap
 import android.graphics.Color

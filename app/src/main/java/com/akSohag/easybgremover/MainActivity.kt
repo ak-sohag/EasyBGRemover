@@ -12,6 +12,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.akSohag.easybgremover.screens.EditorScreen
 import com.akSohag.easybgremover.screens.HomeScreen
+import com.akSohag.easybgremover.ui.theme.AppTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -20,23 +21,24 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-
-            val navController = rememberNavController()
-            NavHost(navController = navController, startDestination = "picker") {
-                composable("picker") {
-                    HomeScreen { selectedUri ->
-                        // Pass the selected URI as a string (encoded to ensure safe navigation)
-                        navController.navigate("editor/${Uri.encode(selectedUri.toString())}")
+            AppTheme {
+                val navController = rememberNavController()
+                NavHost(navController = navController, startDestination = "picker") {
+                    composable("picker") {
+                        HomeScreen { selectedUri ->
+                            // Pass the selected URI as a string (encoded to ensure safe navigation)
+                            navController.navigate("editor/${Uri.encode(selectedUri.toString())}")
+                        }
                     }
-                }
-                composable(
-                    route = "editor/{imageUri}",
-                    arguments = listOf(navArgument("imageUri") { type = NavType.StringType })
-                ) { backStackEntry ->
-                    // Retrieve the URI string and decode it
-                    val imageUriString = backStackEntry.arguments?.getString("imageUri") ?: ""
-                    EditorScreen(uriString = imageUriString){
-                        navController.popBackStack()
+                    composable(
+                        route = "editor/{imageUri}",
+                        arguments = listOf(navArgument("imageUri") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        // Retrieve the URI string and decode it
+                        val imageUriString = backStackEntry.arguments?.getString("imageUri") ?: ""
+                        EditorScreen(uriString = imageUriString) {
+                            navController.popBackStack()
+                        }
                     }
                 }
             }

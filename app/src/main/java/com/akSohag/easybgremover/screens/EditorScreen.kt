@@ -59,11 +59,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.akSohag.easybgremover.ImageSegment
-import com.akSohag.easybgremover.ui.Utils.addBackgroundColor
-import com.akSohag.easybgremover.ui.Utils.checkeredBackground
-import com.akSohag.easybgremover.ui.Utils.saveAsPng
-import com.akSohag.easybgremover.ui.Utils.toBitmap
+import com.akSohag.easybgremover.helpers.ImageSegment
+import com.akSohag.easybgremover.utils.Utils.addBackgroundColor
+import com.akSohag.easybgremover.utils.Utils.checkeredBackground
+import com.akSohag.easybgremover.utils.Utils.saveAsPng
+import com.akSohag.easybgremover.utils.Utils.toBitmap
 import com.github.skydoves.colorpicker.compose.AlphaSlider
 import com.github.skydoves.colorpicker.compose.AlphaTile
 import com.github.skydoves.colorpicker.compose.BrightnessSlider

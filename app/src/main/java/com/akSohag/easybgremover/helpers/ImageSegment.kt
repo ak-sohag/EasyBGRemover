@@ -1,4 +1,4 @@
-package com.akSohag.easybgremover
+package com.akSohag.easybgremover.helpers
 
 import android.graphics.Bitmap
 import com.google.mlkit.vision.common.InputImage
