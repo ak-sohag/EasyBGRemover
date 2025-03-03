@@ -2,7 +2,6 @@ package com.akSohag.easybgremover.screens
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -89,12 +88,12 @@ fun TheHomeScreen(modifier: Modifier = Modifier, onImageSelected: (Uri) -> Unit)
             }
         }
 
-    // multiple image picker
-    val pickMultipleMedia =
-        rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
-            // log
-            Log.d("TAG", "HomeScreen: $uris ")
-        }
+//    // multiple image picker
+//    val pickMultipleMedia =
+//        rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
+//            // log
+//            Log.d("TAG", "HomeScreen: $uris ")
+//        }
 
     Scaffold(
         contentWindowInsets = WindowInsets.safeContent
