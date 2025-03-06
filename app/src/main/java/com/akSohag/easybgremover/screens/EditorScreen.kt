@@ -3,7 +3,6 @@ package com.akSohag.easybgremover.screens
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -59,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import com.akSohag.easybgremover.helpers.ImageSegment
 import com.akSohag.easybgremover.utils.Utils.addBackgroundColor
 import com.akSohag.easybgremover.utils.Utils.checkeredBackground
@@ -102,19 +102,16 @@ fun EditorScreen(
     var savingInProgress by remember { mutableStateOf(false) }
 
 
-    // First LaunchedEffect to load the input bitmap from URI
     LaunchedEffect(uriString) {
         if (!uriString.isNullOrEmpty()) {
-            val uri = Uri.parse(uriString)
+            val uri = uriString.toUri()
             inputBitmap = uri.toBitmap(context)
             displayBitmap = inputBitmap
         }
     }
 
-    // Second LaunchedEffect to process the image when module is ready and bitmap is available
     LaunchedEffect(inputBitmap) {
         if (inputBitmap != null && outputBitmap == null) {
-            Log.d("TAG", "EditorScreen: Starting image processing")
             loading = true
             try {
                 outputBitmap = withContext(Dispatchers.Default) {
@@ -125,7 +122,6 @@ fun EditorScreen(
             }
             if (outputBitmap != null) displayBitmap = outputBitmap else outputBitmap = inputBitmap
             loading = false
-            Log.d("TAG", "EditorScreen: Image processing completed")
         }
     }
 
@@ -223,14 +219,11 @@ fun EditorScreen(
         bottomBar = {
             if (loading.not()) {
                 EditorBottomAppBar(onColorSelected = { color ->
-                    Log.d("TAG", "EditorScreen: Selected color $color")
-                    // Apply the background color to the bitmap
                     if (outputBitmap != null) {
                         processingBackground = true
                         scope.launch {
                             displayBitmap = outputBitmap!!.addBackgroundColor(color)
                             processingBackground = false
-                            Log.d("TAG", "EditorScreen: Background color applied to bitmap")
                         }
                     }
                 })
@@ -248,7 +241,7 @@ fun EditorScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Card{
+            Card {
                 Box(contentAlignment = Alignment.Center) {
                     if (imageUriString.value.isNotBlank()) {
                         if (displayBitmap != null && loading.not()) {
@@ -267,7 +260,8 @@ fun EditorScreen(
                                     },
                             )
                         } else if (displayBitmap != null) {
-                            Image(bitmap = displayBitmap!!.asImageBitmap(),
+                            Image(
+                                bitmap = displayBitmap!!.asImageBitmap(),
                                 contentDescription = "Processed Image",
                                 modifier = Modifier
                                     .drawBehind {
@@ -342,9 +336,10 @@ private fun EditorBottomAppBar(
                                 .padding(8.dp)
                                 .clip(MaterialTheme.shapes.medium), controller = controller
                         )
-                        HsvColorPicker(modifier = Modifier
-                            .weight(1f)
-                            .fillMaxSize(),
+                        HsvColorPicker(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxSize(),
                             controller = controller,
                             onColorChanged = { colorEnvelope: ColorEnvelope ->
                                 customColor = colorEnvelope.color
@@ -370,9 +365,10 @@ private fun EditorBottomAppBar(
                         controller = controller,
                     )
 
-                    Button(modifier = Modifier
-                        .fillMaxWidth()
-                        .safeGesturesPadding(),
+                    Button(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .safeGesturesPadding(),
                         contentPadding = PaddingValues(16.dp),
                         onClick = {
                             // Apply the selected custom color when done
@@ -397,7 +393,8 @@ private fun EditorBottomAppBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             item {
-                Card(colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.Transparent),
                     border = CardDefaults.outlinedCardBorder(),
                     modifier = Modifier
                         .size(70.dp)
@@ -428,7 +425,8 @@ private fun EditorBottomAppBar(
             // Predefined color items
             items(colors.size) {
                 val color = colors[it]
-                Card(colors = CardDefaults.cardColors(containerColor = color),
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = color),
                     border = CardDefaults.outlinedCardBorder(),
                     modifier = Modifier
                         .size(70.dp)
