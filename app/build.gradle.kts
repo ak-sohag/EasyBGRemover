@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -58,29 +59,30 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     // navigation
-    implementation("androidx.navigation:navigation-compose:2.8.7")
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
 
 
     // material theme
-    implementation("androidx.compose.material:material-icons-core:1.7.8")
-    implementation("androidx.compose.material:material-icons-extended:1.7.8")
+    implementation(libs.androidx.material.icons.core)
+    implementation(libs.androidx.material.icons.extended)
 
 
     // mlkit
-    implementation ("com.google.android.gms:play-services-base:18.5.0")
-    implementation ("com.google.android.gms:play-services-mlkit-subject-segmentation:16.0.0-beta1")
+    implementation (libs.play.services.base)
+    implementation (libs.play.services.mlkit.subject.segmentation)
 
     // image
-    implementation("io.coil-kt.coil3:coil-compose:3.1.0")
-    implementation("io.coil-kt.coil3:coil-network-okhttp:3.1.0")
-    implementation ("com.github.SmartToolFactory:Compose-BeforeAfter:1.2.3")
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+    implementation (libs.compose.beforeafter)
 
-    implementation("com.github.skydoves:colorpicker-compose:1.1.2")
+    implementation(libs.colorpicker.compose)
 
 
 
     // fonts
-    implementation("androidx.compose.ui:ui-text-google-fonts:1.7.8")
+    implementation(libs.androidx.ui.text.google.fonts)
 
     
 
