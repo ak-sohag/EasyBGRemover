@@ -1,6 +1,5 @@
 package com.akSohag.easybgremover.screens
 
-import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -27,7 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -36,14 +34,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.akSohag.easybgremover.R
-import com.akSohag.easybgremover.helpers.MLKitModuleInstaller
 import com.akSohag.easybgremover.utils.Utils.checkeredBackground
 import com.smarttoolfactory.beforeafter.BeforeAfterImage
 import com.smarttoolfactory.beforeafter.OverlayStyle
@@ -53,34 +49,9 @@ import kotlinx.coroutines.delay
  * Created by ak-sohag on 2/25/2025.
  */
 
-
 @Composable
-fun HomeScreen(
-    onImageSelected: (Uri) -> Unit,
-) {
+fun HomeScreen(modifier: Modifier = Modifier, onImageSelected: (Uri) -> Unit) {
 
-    MyApp(LocalContext.current, onImageSelected)
-
-}
-
-@Composable
-fun MyApp(context: Context, onImageSelected: (Uri) -> Unit) {
-    var isModuleReady by remember { mutableStateOf(false) }
-
-    if (!isModuleReady) {
-        MLKitModuleInstaller(context) { ready ->
-            isModuleReady = ready
-        }
-    } else {
-        TheHomeScreen {
-            onImageSelected(it)
-        }
-    }
-}
-
-
-@Composable
-fun TheHomeScreen(modifier: Modifier = Modifier, onImageSelected: (Uri) -> Unit) {
     val pickMedia =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             uri?.let {
@@ -97,10 +68,19 @@ fun TheHomeScreen(modifier: Modifier = Modifier, onImageSelected: (Uri) -> Unit)
 
     Scaffold(
         contentWindowInsets = WindowInsets.safeContent
-    ) {
+    ) { paddingValues ->
+
+        val paddingHorizontal = if (paddingValues.calculateLeftPadding(LayoutDirection.Ltr) == 0.dp &&
+            paddingValues.calculateRightPadding(LayoutDirection.Ltr) == 0.dp) {
+            24
+        } else {
+            0
+        }
+
         Box(
             modifier
-                .padding(it)
+                .padding(paddingValues)
+                .padding(horizontal = paddingHorizontal.dp)
                 .fillMaxSize()
 
         ) {
@@ -176,8 +156,6 @@ fun TheHomeScreen(modifier: Modifier = Modifier, onImageSelected: (Uri) -> Unit)
 
         }
     }
-
-
 }
 
 
@@ -224,13 +202,4 @@ fun BeforeAfter(modifier: Modifier = Modifier) {
         afterImage = beforeImage,
         progress = animatedProgress
     )
-}
-
-
-@Preview
-@Composable
-fun HomeScreenPreview(modifier: Modifier = Modifier) {
-    HomeScreen {
-
-    }
 }
