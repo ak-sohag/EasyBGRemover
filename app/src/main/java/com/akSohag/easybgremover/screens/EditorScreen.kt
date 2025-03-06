@@ -57,6 +57,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.akSohag.easybgremover.helpers.ImageSegment
@@ -234,10 +235,20 @@ fun EditorScreen(
                 showSaveBottomSheet = true
             })
         }) { paddingValues ->
+
+        val paddingHorizontal =
+            if (paddingValues.calculateLeftPadding(LayoutDirection.Ltr) == 0.dp &&
+                paddingValues.calculateRightPadding(LayoutDirection.Ltr) == 0.dp
+            ) {
+                24
+            } else {
+                0
+            }
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues = paddingValues),
+                .padding(paddingValues)
+                .padding(horizontal = paddingHorizontal.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

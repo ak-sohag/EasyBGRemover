@@ -15,15 +15,15 @@ import kotlin.coroutines.suspendCoroutine
 
 object ImageSegment {
 
-    val options = SubjectSegmenterOptions.Builder()
+    private val options = SubjectSegmenterOptions.Builder()
         .enableForegroundBitmap()
         .build()
 
-    val segmenter = SubjectSegmentation.getClient(options)
+    val subjectSegmenter = SubjectSegmentation.getClient(options)
 
     suspend fun processImage(bitmap: Bitmap) = suspendCoroutine {
         val inputImage = InputImage.fromBitmap(bitmap, 0)
-        segmenter.process(inputImage)
+        subjectSegmenter.process(inputImage)
             .addOnSuccessListener { result ->
                 it.resume(result.foregroundBitmap)
             }

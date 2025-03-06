@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -21,6 +22,10 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
+import androidx.core.net.toUri
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -86,7 +91,7 @@ object Utils {
      * @param quality The compression quality (0-100)
      * @return The URI of the saved file or null if saving failed
      */
-    suspend fun saveBitmapAsPng(
+    private suspend fun saveBitmapAsPng(
         context: Context,
         bitmap: Bitmap,
         filename: String,
@@ -181,11 +186,7 @@ object Utils {
 
         // Create a new mutable bitmap with the same size
         val newBitmap =
-            Bitmap.createBitmap(
-                softwareBitmap.width,
-                softwareBitmap.height,
-                Bitmap.Config.ARGB_8888
-            )
+            createBitmap(softwareBitmap.width, softwareBitmap.height)
 
         val canvas = Canvas(newBitmap)
 
@@ -211,43 +212,78 @@ object Utils {
     }
 
 
-    /**
-     * Scales down an input bitmap to fit within 1080p resolution (1920x1080) while maintaining aspect ratio.
-     * This optimizes memory usage and processing speed while preserving sufficient detail for segmentation.
-     *
-     * @return Scaled bitmap with max dimension of 1920x1080, maintaining aspect ratio
-     */
-    suspend fun Bitmap.scaleDownTo1080p(): Bitmap {
-        val maxWidth = 1920
-        val maxHeight = 1080
+    fun isPlayServicesAvailable(context: Context): Boolean {
+        val googleApiAvailability = GoogleApiAvailability.getInstance()
+        val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(context)
 
-        // Get dimensions
-        val width = width
-        val height = height
+        return when (resultCode) {
+            ConnectionResult.SUCCESS -> true
+            else -> {
+                if (googleApiAvailability.isUserResolvableError(resultCode)) {
+                    googleApiAvailability.getErrorDialog(context as Activity, resultCode, 9999)
+                        ?.show()
+                }
+                false
+            }
+        }
+    }
 
-        // Return original if already smaller than 1080p
-        if (width <= maxWidth && height <= maxHeight) {
-            return this
+    fun isProbablyEmulator(): Boolean {
+        // Check build fingerprint for generic or unknown values.
+        if (Build.FINGERPRINT.startsWith("generic") || Build.FINGERPRINT.startsWith("unknown")) {
+            return true
         }
 
-        // Calculate scaling factors
-        val widthRatio = maxWidth.toFloat() / width
-        val heightRatio = maxHeight.toFloat() / height
+        // Check for typical emulator models.
+        val model = Build.MODEL
+        if (model.contains("google_sdk") || model.contains("Emulator") ||
+            model.contains("Android SDK built for")
+        ) {
+            return true
+        }
 
-        // Use the smaller ratio to ensure image fits within 1080p bounds
-        val scaleFactor = minOf(widthRatio, heightRatio)
+        // Check manufacturer and brand.
+        val manufacturer = Build.MANUFACTURER
+        val brand = Build.BRAND
+        val device = Build.DEVICE
+        if (manufacturer.contains("Genymotion") ||
+            (brand.startsWith("generic") && device.startsWith("generic"))
+        ) {
+            return true
+        }
 
-        // Calculate new dimensions
-        val newWidth = (width * scaleFactor).toInt()
-        val newHeight = (height * scaleFactor).toInt()
+        // Check product names that are known to be associated with emulators.
+        val product = Build.PRODUCT
+        if (product == "sdk_google" || product == "google_sdk" || product == "sdk") {
+            return true
+        }
 
-        // Create and return scaled bitmap using bilinear filtering for better quality/speed balance
-        val bitmap = Bitmap.createScaledBitmap(this, newWidth, newHeight, true)
+        // Check hardware properties commonly used in emulators.
+        val hardware = Build.HARDWARE
+        if (hardware.contains("goldfish") || hardware.contains("ranchu") || hardware.contains("gki")) {
+            return true
+        }
 
-        // recycle original for memory optimization
-        recycle()
+        // Check for the QEMU flag via system properties.
+        try {
+            val qemu = System.getProperty("ro.kernel.qemu")
+            if (qemu?.toIntOrNull() == 1) {
+                return true
+            }
+        } catch (e: Exception) {
+            // Ignore exceptions, as this is just a heuristic check.
+        }
 
-        return bitmap
+        // If none of the conditions matched, likely not an emulator.
+        return false
+    }
+
+    fun openPlayServicesInPlayStore(context: Context) {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = "market://details?id=com.google.android.gms".toUri()
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
     }
 
 
