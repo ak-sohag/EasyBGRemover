@@ -137,7 +137,7 @@ fun EditorScreen(
                     displayBitmap?.let { bitmap ->
                         savingInProgress = true
                         val uri = withContext(Dispatchers.IO) {
-                            bitmap.saveAsPng(context, "my_image_${System.currentTimeMillis()}")
+                            bitmap.saveAsPng(context, "Easy_BG_Remover_${System.currentTimeMillis()}")
                         }
                         uriOfImage = uri
                         savingInProgress = false

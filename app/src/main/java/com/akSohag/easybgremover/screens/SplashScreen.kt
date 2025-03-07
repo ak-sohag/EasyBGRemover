@@ -40,6 +40,7 @@ import com.google.android.gms.common.moduleinstall.ModuleInstall
 import com.google.android.gms.common.moduleinstall.ModuleInstallClient
 import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
 import com.google.android.gms.common.moduleinstall.ModuleInstallStatusUpdate
+import kotlinx.coroutines.delay
 
 /**
  * Created by ak-sohag on 3/6/2025.
@@ -50,6 +51,11 @@ import com.google.android.gms.common.moduleinstall.ModuleInstallStatusUpdate
 fun SplashScreen(modifier: Modifier = Modifier, onReady: (Boolean) -> Unit) {
 
     Scaffold { paddingValues ->
+
+        LaunchedEffect(Unit) {
+            delay(3000L)
+            onReady(true)
+        }
 
         Box(
             modifier = modifier
